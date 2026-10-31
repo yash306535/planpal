@@ -1,0 +1,29 @@
+# Render Blueprint — provisions PlanPal as a Node web service.
+# Secrets are declared with `sync: false`, so they are NEVER stored in this file
+# or in git; Render prompts for them in the dashboard (or set them via the API).
+services:
+  - type: web
+    name: planpal
+    runtime: node
+    region: oregon
+    plan: free
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm run start
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      # Non-secret config (safe to commit).
+      - key: ANTHROPIC_MODEL
+        value: claude-opus-5-5
+      - key: MOCK_MODE
+        value: "false"
+      # Secrets — set in the Render dashboard / via the API, never committed.
+      # With ANTHROPIC_API_KEY unset the app serves the deterministic mock plan.
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: TAVUS_API_KEY
+        sync: false
+      - key: TAVUS_REPLICA_ID
+        sync: false
+      - key: TAVUS_PERSONA_ID
+        sync: false

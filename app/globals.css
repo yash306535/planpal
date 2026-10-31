@@ -1,0 +1,131 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  PlanPal — an "event planner's journal": warm paper, deep ink, one bold accent.
+  Colors are space-separated RGB channels so Tailwind's <alpha-value> works.
+  Event-type themes swap ONLY the accent pair (and the hero image, in markup).
+*/
+:root {
+  --paper: 246 240 230; /* #F6F0E6 warm off-white */
+  --paper-deep: 238 230 216; /* #EEE6D8 cards / insets */
+  --ink: 31 42 36; /* #1F2A24 deep ink */
+  --ink-soft: 74 86 78; /* #4A564E secondary text (AA on paper) */
+  --line: 214 203 184; /* #D6CBB8 hairlines */
+
+  --terracotta: 200 85 61; /* #C8553D */
+  --sage: 122 143 106; /* #7A8F6A */
+
+  /* default accent = terracotta. --accent is vivid (fills/decor);
+     --accent-deep is darkened for text + buttons to hold 4.5:1 contrast. */
+  --accent: 200 85 61;
+  --accent-deep: 163 61 41; /* #A33D29 */
+}
+
+:root[data-theme="wedding"] {
+  --accent: 184 138 62; /* soft gold */
+  --accent-deep: 124 90 36; /* #7C5A24 */
+}
+:root[data-theme="birthday"] {
+  --accent: 224 138 30; /* citrus */
+  --accent-deep: 160 86 8; /* #A05608 */
+}
+:root[data-theme="community"] {
+  --accent: 94 123 79; /* earthy green */
+  --accent-deep: 60 85 51; /* #3C5533 */
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background-color: rgb(var(--paper));
+    color: rgb(var(--ink));
+    font-feature-settings:
+      "liga" 1,
+      "calt" 1;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-fraunces), Georgia, serif;
+    font-weight: 600;
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+  }
+  /* Subtle paper grain, fixed behind everything, never intercepts clicks. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  :focus-visible {
+    outline: 2px solid rgb(var(--accent-deep));
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+@layer components {
+  /* Ticket-stub card for timeline milestones: punched notches + perforation. */
+  .ticket {
+    position: relative;
+    background: rgb(var(--paper-deep));
+    border: 1px solid rgb(var(--line));
+    border-radius: 10px;
+  }
+  .ticket::before,
+  .ticket::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgb(var(--paper));
+    border: 1px solid rgb(var(--line));
+    transform: translateY(-50%);
+  }
+  .ticket::before {
+    left: -10px;
+  }
+  .ticket::after {
+    right: -10px;
+  }
+
+  /* Arched / rounded-top image frame. */
+  .frame-arch {
+    border-radius: 48% 48% 10px 10px / 42% 42% 10px 10px;
+  }
+  .frame-soft {
+    border-radius: 14px 14px 14px 40px;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .animate-fade-up {
+    animation: fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
+/* Respect reduced motion everywhere. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

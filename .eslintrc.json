@@ -1,0 +1,16 @@
+{
+  "extends": ["next/core-web-vitals", "next/typescript"],
+  "rules": {
+    "@typescript-eslint/no-explicit-any": "error",
+    "react/no-danger": "error",
+    "no-console": ["error", { "allow": ["error", "warn"] }]
+  },
+  "overrides": [
+    {
+      "files": ["tests/**/*.{ts,tsx}", "vitest.setup.ts"],
+      "rules": {
+        "no-console": "off"
+      }
+    }
+  ]
+}
