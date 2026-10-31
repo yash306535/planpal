@@ -31,6 +31,28 @@ To use the real services, copy `.env.example` → `.env` (or `.env.local`) and f
 
 ---
 
+## Deploy to Render
+
+The repo ships a `render.yaml` blueprint (Node web service, `npm ci --include=dev && npm run build` → `npm run start`, health check on `/`, Node 22 pinned via `.node-version`). Secrets use `sync: false`, so they are never committed — you set them in Render.
+
+**One click (recommended):**
+
+1. Open **https://render.com/deploy?repo=https://github.com/yash306535/planpal**
+2. Render reads `render.yaml`. When prompted, set the env vars you want:
+   - `ANTHROPIC_API_KEY` — for real AI plans (leave blank to run in mock mode),
+   - `TAVUS_API_KEY`, `TAVUS_PERSONA_ID`, `TAVUS_REPLICA_ID` — for live video (optional).
+3. Create the service. `autoDeploy` is on, so every `git push` to `main` redeploys.
+
+**Via the Render API** (if you have `RENDER_API_KEY` in your shell):
+
+```bash
+RENDER_API_KEY=... ./scripts/render-deploy.sh
+```
+
+Then add the secret env vars in the Render dashboard and trigger a deploy. Never paste the API key or any secret into source or chat.
+
+---
+
 ## Environment variables
 
 All variables are **server-side only** and are never exposed to the client.
