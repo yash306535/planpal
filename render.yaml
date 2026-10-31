@@ -14,7 +14,7 @@ services:
     envVars:
       # Non-secret config (safe to commit).
       - key: ANTHROPIC_MODEL
-        value: claude-opus-5-5
+        value: claude-haiku-5-5
       - key: MOCK_MODE
         value: "false"
       # Secrets — set in the Render dashboard / via the API, never committed.
