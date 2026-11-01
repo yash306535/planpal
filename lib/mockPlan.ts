@@ -1,5 +1,5 @@
 import { EVENT_TYPE_META } from "@/lib/defaults";
-import type { EventInput, EventType, LlmPlan } from "@/lib/schema";
+import type { EventInput, EventType, LlmIdea, LlmPlan } from "@/lib/schema";
 
 /**
  * Deterministic, offline plan generator. Used whenever keys are missing or
@@ -131,18 +131,12 @@ function clip(s: string, max: number): string {
   return t.length > max ? `${t.slice(0, max - 1).trimEnd()}…` : t;
 }
 
-type MockIdea = {
-  title: string;
-  description: string;
-  tag: "theme" | "food" | "activity" | "decor";
-};
-
-function ideasFor(input: EventInput): MockIdea[] {
+function ideasFor(input: EventInput): LlmIdea[] {
   const city = input.city;
   const pref = input.preferences.trim();
   const prefLine = pref ? ` We leaned into your notes — "${clip(pref, 90)}".` : "";
 
-  const sets: Record<EventType, MockIdea[]> = {
+  const sets: Record<EventType, LlmIdea[]> = {
     wedding: [
       {
         title: "Heirloom garden ceremony",

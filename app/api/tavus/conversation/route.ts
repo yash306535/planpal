@@ -1,4 +1,4 @@
-import { clientIp, json, readJsonBody } from "@/lib/apiHelpers";
+import { API_RATE_LIMIT, json, rateLimit, readJsonBody } from "@/lib/apiHelpers";
 import { createRateLimiter } from "@/lib/rateLimit";
 import { tavusRequestSchema, type TavusResponse } from "@/lib/schema";
 import { createTavusConversation, getTavusConfig } from "@/lib/tavusClient";
@@ -6,15 +6,11 @@ import { createTavusConversation, getTavusConfig } from "@/lib/tavusClient";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const limiter = createRateLimiter({ limit: 10, windowMs: 60_000 });
+const limiter = createRateLimiter(API_RATE_LIMIT);
 
 export async function POST(req: Request): Promise<Response> {
-  const rate = limiter.check(clientIp(req));
-  if (!rate.allowed) {
-    return json({ error: "Too many requests. Please slow down." }, 429, {
-      "retry-after": String(Math.ceil(rate.retryAfterMs / 1000)),
-    });
-  }
+  const limited = rateLimit(req, limiter);
+  if (limited) return limited;
 
   const body = await readJsonBody(req);
   const parsed = tavusRequestSchema.safeParse(body);
