@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent, type ReactNode } from "react";
 import { EVENT_TYPE_META, CURRENCIES } from "@/lib/defaults";
 import { EVENT_TYPE_IMAGES } from "@/lib/images";
 import {
@@ -77,6 +77,98 @@ function makeExample(type: EventType): FormState {
   return examples[type];
 }
 
+const inputClass =
+  "w-full rounded-lg border border-line bg-paper px-3 py-2.5 text-ink shadow-sm placeholder:text-ink-soft/60 focus-visible:border-accent-deep";
+
+/** Build the `aria-describedby` id list (hint first, then error) for a field. */
+function describedByIds(
+  field: string,
+  hasHint: boolean,
+  hasError: boolean,
+): string | undefined {
+  return (
+    [hasHint ? `${field}-hint` : "", hasError ? `${field}-error` : ""]
+      .filter(Boolean)
+      .join(" ") || undefined
+  );
+}
+
+/** Inline, accessible validation message tied to its field by a stable id. */
+function FieldError({ id, message }: { id: string; message: string }) {
+  return (
+    <p id={id} className="mt-1.5 flex items-center gap-1.5 text-sm text-accent-deep">
+      <span aria-hidden className="font-bold">
+        ⚠
+      </span>
+      <span>{message}</span>
+    </p>
+  );
+}
+
+interface TextFieldProps {
+  name: keyof FormState;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  hint?: ReactNode;
+  error?: string;
+  type?: "text" | "date" | "number";
+  placeholder?: string;
+  maxLength?: number;
+  inputMode?: "numeric" | "decimal";
+  min?: number;
+  max?: number;
+}
+
+/**
+ * One labelled field with its hint and error wired for accessibility
+ * (`aria-invalid` + `aria-describedby`). Extracted so every field shares the
+ * same correct markup instead of repeating it per input.
+ */
+function TextField({
+  name,
+  label,
+  value,
+  onChange,
+  hint,
+  error,
+  type = "text",
+  placeholder,
+  maxLength,
+  inputMode,
+  min,
+  max,
+}: TextFieldProps) {
+  return (
+    <div>
+      <label htmlFor={name} className="mb-1 block font-medium">
+        {label}
+      </label>
+      <input
+        id={name}
+        name={name}
+        type={type}
+        value={value}
+        maxLength={maxLength}
+        inputMode={inputMode}
+        min={min}
+        max={max}
+        onChange={(e) => onChange(e.target.value)}
+        aria-invalid={Boolean(error)}
+        aria-describedby={describedByIds(name, Boolean(hint), Boolean(error))}
+        className={inputClass}
+        placeholder={placeholder}
+      />
+      {hint ? (
+        <p id={`${name}-hint`} className="mt-1 text-sm text-ink-soft">
+          {hint}
+        </p>
+      ) : null}
+      {error ? <FieldError id={`${name}-error`} message={error} /> : null}
+    </div>
+  );
+}
+
 interface EventFormProps {
   onSubmit: (input: EventInput) => void;
   loading: boolean;
@@ -132,29 +224,6 @@ export function EventForm({ onSubmit, loading, error, onTypeChange }: EventFormP
     onTypeChange?.(example.type);
     validateAndSubmit(example);
   }
-
-  function describedBy(field: keyof FormState, hasHint: boolean): string | undefined {
-    const ids = [hasHint ? `${field}-hint` : "", errors[field] ? `${field}-error` : ""]
-      .filter(Boolean)
-      .join(" ");
-    return ids || undefined;
-  }
-
-  const fieldError = (field: keyof FormState) =>
-    errors[field] ? (
-      <p
-        id={`${field}-error`}
-        className="mt-1.5 flex items-center gap-1.5 text-sm text-accent-deep"
-      >
-        <span aria-hidden className="font-bold">
-          ⚠
-        </span>
-        <span>{errors[field]}</span>
-      </p>
-    ) : null;
-
-  const inputClass =
-    "w-full rounded-lg border border-line bg-paper px-3 py-2.5 text-ink shadow-sm placeholder:text-ink-soft/60 focus-visible:border-accent-deep";
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} noValidate className="space-y-8">
@@ -228,96 +297,54 @@ export function EventForm({ onSubmit, loading, error, onTypeChange }: EventFormP
           The essentials
         </h2>
 
-        <div>
-          <label htmlFor="name" className="mb-1 block font-medium">
-            Event name
-          </label>
-          <input
-            id="name"
-            name="name"
-            type="text"
-            value={values.name}
-            maxLength={100}
-            onChange={(e) => set("name", e.target.value)}
-            aria-invalid={Boolean(errors.name)}
-            aria-describedby={describedBy("name", true)}
-            className={inputClass}
-            placeholder="e.g. Maya & Leo"
+        <TextField
+          name="name"
+          label="Event name"
+          value={values.name}
+          onChange={(v) => set("name", v)}
+          maxLength={100}
+          placeholder="e.g. Maya & Leo"
+          hint="What should we call it?"
+          error={errors.name}
+        />
+
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <TextField
+            name="date"
+            label="Date"
+            type="date"
+            value={values.date}
+            onChange={(v) => set("date", v)}
+            hint={<>Let&rsquo;s start here — everything else bends around it.</>}
+            error={errors.date}
           />
-          <p id="name-hint" className="mt-1 text-sm text-ink-soft">
-            What should we call it?
-          </p>
-          {fieldError("name")}
+
+          <TextField
+            name="city"
+            label="City"
+            value={values.city}
+            onChange={(v) => set("city", v)}
+            maxLength={100}
+            placeholder="e.g. Lisbon"
+            hint="Helps us tailor ideas and vendors."
+            error={errors.city}
+          />
         </div>
 
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-          <div>
-            <label htmlFor="date" className="mb-1 block font-medium">
-              Date
-            </label>
-            <input
-              id="date"
-              name="date"
-              type="date"
-              value={values.date}
-              onChange={(e) => set("date", e.target.value)}
-              aria-invalid={Boolean(errors.date)}
-              aria-describedby={describedBy("date", true)}
-              className={inputClass}
-            />
-            <p id="date-hint" className="mt-1 text-sm text-ink-soft">
-              Let&rsquo;s start here — everything else bends around it.
-            </p>
-            {fieldError("date")}
-          </div>
-
-          <div>
-            <label htmlFor="city" className="mb-1 block font-medium">
-              City
-            </label>
-            <input
-              id="city"
-              name="city"
-              type="text"
-              value={values.city}
-              maxLength={100}
-              onChange={(e) => set("city", e.target.value)}
-              aria-invalid={Boolean(errors.city)}
-              aria-describedby={describedBy("city", true)}
-              className={inputClass}
-              placeholder="e.g. Lisbon"
-            />
-            <p id="city-hint" className="mt-1 text-sm text-ink-soft">
-              Helps us tailor ideas and vendors.
-            </p>
-            {fieldError("city")}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-          <div>
-            <label htmlFor="guests" className="mb-1 block font-medium">
-              Guests
-            </label>
-            <input
-              id="guests"
-              name="guests"
-              type="number"
-              inputMode="numeric"
-              min={1}
-              max={10000}
-              value={values.guests}
-              onChange={(e) => set("guests", e.target.value)}
-              aria-invalid={Boolean(errors.guests)}
-              aria-describedby={describedBy("guests", true)}
-              className={inputClass}
-              placeholder="e.g. 120"
-            />
-            <p id="guests-hint" className="mt-1 text-sm text-ink-soft">
-              A rough headcount is fine.
-            </p>
-            {fieldError("guests")}
-          </div>
+          <TextField
+            name="guests"
+            label="Guests"
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={10000}
+            value={values.guests}
+            onChange={(v) => set("guests", v)}
+            placeholder="e.g. 120"
+            hint="A rough headcount is fine."
+            error={errors.guests}
+          />
 
           <div>
             <span className="mb-1 block font-medium" id="budget-group-label">
@@ -333,7 +360,7 @@ export function EventForm({ onSubmit, loading, error, onTypeChange }: EventFormP
                 value={values.budget}
                 onChange={(e) => set("budget", e.target.value)}
                 aria-invalid={Boolean(errors.budget)}
-                aria-describedby={describedBy("budget", false)}
+                aria-describedby={describedByIds("budget", false, Boolean(errors.budget))}
                 aria-label="Budget amount"
                 className={inputClass}
                 placeholder="e.g. 28000"
@@ -355,7 +382,9 @@ export function EventForm({ onSubmit, loading, error, onTypeChange }: EventFormP
                 ))}
               </select>
             </div>
-            {fieldError("budget")}
+            {errors.budget ? (
+              <FieldError id="budget-error" message={errors.budget} />
+            ) : null}
           </div>
         </div>
 
@@ -371,7 +400,11 @@ export function EventForm({ onSubmit, loading, error, onTypeChange }: EventFormP
             value={values.preferences}
             onChange={(e) => set("preferences", e.target.value)}
             aria-invalid={Boolean(errors.preferences)}
-            aria-describedby={describedBy("preferences", true)}
+            aria-describedby={describedByIds(
+              "preferences",
+              true,
+              Boolean(errors.preferences),
+            )}
             className={`${inputClass} resize-y`}
             placeholder="Colors, vibe, must-haves, anything to avoid…"
           />
@@ -379,7 +412,9 @@ export function EventForm({ onSubmit, loading, error, onTypeChange }: EventFormP
             {values.preferences.length}/500 — the more you share, the more tailored the
             ideas.
           </p>
-          {fieldError("preferences")}
+          {errors.preferences ? (
+            <FieldError id="preferences-error" message={errors.preferences} />
+          ) : null}
         </div>
       </div>
 
